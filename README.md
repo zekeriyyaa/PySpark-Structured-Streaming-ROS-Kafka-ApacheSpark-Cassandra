@@ -47,7 +47,12 @@ Once you create "demo" topic, you can run [kafka-demo/producer.py](https://githu
 ```
 pip install kafka-python
 ```
-You should see a view like the one given below.
+You should see a view like the one given below after run the commands:
+```
+python3 producer.py
+python3 consumer.py
+```
+
 <p align="center" width="100%">
     <img src="https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/kafka-demo.png"> 
 </p>
@@ -66,7 +71,7 @@ After all installations are completed, you can make a quick example like [here](
 ### 1. Prepare a robotic simulation environment
 [ROS (Robot Operating System)](http://wiki.ros.org/) allows us to design a robotic environment. We will use [Turtlebot3](https://emanual.robotis.com/docs/en/platform/turtlebot3/overview/), a robot in [Gazebo](http://gazebosim.org/) simulation env, to generate data for our use case. Turtlebot3 publishes its data with ROS topics. Therefore, we will subscribe the topic and send data into Kafka.
 
-#### Analysis the data we will use
+#### Run the simulation environment and analysis the data we will use
 Turtlebot3 publishes its odometry data with ROS "odom" topic. So, we can see the published data with the given command:
 ```
 # run the simulation environment
@@ -125,7 +130,7 @@ In this use case, we will just interest the given part of the data:
 The data produced by Turtlebot3 will stored into Kafka clusters. 
 
 #### Prepare Kafka for Use Case
-First of all, we will create a new Kafka topic for ROS odom data using the given command:
+First of all, we will create a new Kafka topic namely *odometry* for ROS odom data using the given commands:
 ```
 # Change your path to Kafka folder and then run 
 bin/zookeeper-server-start.sh config/zookeeper.properties
@@ -161,8 +166,6 @@ def callback(msg):
     print(f"Producing message {datetime.now()} Message :\n {str(messages)}")
     producer.send("odometry",messages)
     count+=1
-    if count == 20:
-        count = 0
 
 producer = KafkaProducer(
     bootstrap_servers=["localhost:9092"],
@@ -239,8 +242,8 @@ odometrySchema = StructType([
             ])
 ```
 Then, we create a Spark Session using two packages:
-- **for kafka** :    org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.0
-- **for cassandra**: com.datastax.spark:spark-cassandra-connector_2.12:3.0.0
+- **for spark kafka connector**     : org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.0
+- **for spark cassandra connector** : com.datastax.spark:spark-cassandra-connector_2.12:3.0.0
 ```python3
 spark = SparkSession \
     .builder \
@@ -248,9 +251,11 @@ spark = SparkSession \
     .config("spark.jars.packages","org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.0,com.datastax.spark:spark-cassandra-connector_2.12:3.0.0") \
     .getOrCreate()
 ```
-> :warning: **If you use spark-submit you can specify the packages as:** *spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0,com.datastax.spark:spark-cassandra-connector_2.12:3.0.0 spark_cassandra.py *
+> :warning: **If you use spark-submit you can specify the packages as:** 
 
-In order to read Kafka stream, we use **readStream** and specify Kafka configurations as the given below:
+- **spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0,com.datastax.spark:spark-cassandra-connector_2.12:3.0.0 spark_cassandra.py
+
+In order to read Kafka stream, we use **readStream()** and specify Kafka configurations as the given below:
 ```python3
 df = spark \
   .readStream \
@@ -261,12 +266,12 @@ df = spark \
   .option("startingOffsets", "latest") \
   .load() 
 ```
-Since Kafka send data as binary, first we need to convert the binary value to String using selectExpr() as the given below:
+Since Kafka send data as binary, first we need to convert the binary value to String using **selectExpr()** as the given below:
 ```python3
 df1 = df.selectExpr("CAST(value AS STRING)").select(from_json(col("value"),odometrySchema).alias("data")).select("data.*")
 df1.printSchema()
 ```
-Although Apache Spark isn't capable of directly write stream data to Cassandra yet, we can do it with use *foreachBatch()* as the given below:
+Although Apache Spark isn't capable of directly write stream data to Cassandra yet (using **writeStream()**), we can do it with use **foreachBatch()** as the given below:
 ```python3
 def writeToCassandra(writeDF, _):
   writeDF.write \
