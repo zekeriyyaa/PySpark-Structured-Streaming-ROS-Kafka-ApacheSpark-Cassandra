@@ -76,3 +76,12 @@ In this case, we will just use the given part of the data:
       w: 0.9999911861487526
 ```
 
+### 2. Prepare Kafka and Zookeeper environment
+The data produced by Turtlebot3 will stored into Kafka clusters. 
+
+#### Installation of Kafka and Zookeeper
+We won't address the whole installation process of Kafka and Zookeeper but you can access all required info from [Kakfa & Zookeeper Installation](https://www.linode.com/docs/guides/how-to-install-apache-kafka-on-ubuntu/).
+
+
+
+
