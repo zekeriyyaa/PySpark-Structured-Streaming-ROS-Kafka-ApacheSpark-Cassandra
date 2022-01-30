@@ -137,7 +137,60 @@ bin/kafka-server-start.sh config/server.properties
 bin/kafka-topics.sh --create --topic odometry --partitions 1 --replication-factor 1 -bootstrap-server localhost:9092
 ```
 Then we will write a ROS subscriber to listen to the data from Turtlebot3. Also, since we need to send data to Kafka, it is necessary to add a producer script in it. We will use [ros/publish2kafka.py](https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/ros/publish2kafka.py) to do it. This script subscribes to the odom topic and sends the content of the topic to Kafka.
+```python3
+import rospy
+from nav_msgs.msg import Odometry
+import json
+from datetime import datetime
+from kafka import KafkaProducer
 
+count = 0
+def callback(msg):
+    global count
+    messages={
+        "id":count,
+        "posex":float("{0:.5f}".format(msg.pose.pose.position.x)),
+        "posey":float("{0:.5f}".format(msg.pose.pose.position.y)),
+        "posez":float("{0:.5f}".format(msg.pose.pose.position.z)),
+        "orientx":float("{0:.5f}".format(msg.pose.pose.orientation.x)),
+        "orienty":float("{0:.5f}".format(msg.pose.pose.orientation.y)),
+        "orientz":float("{0:.5f}".format(msg.pose.pose.orientation.z)),
+        "orientw":float("{0:.5f}".format(msg.pose.pose.orientation.w))
+        }
+
+    print(f"Producing message {datetime.now()} Message :\n {str(messages)}")
+    producer.send("odometry",messages)
+    count+=1
+    if count == 20:
+        count = 0
+
+producer = KafkaProducer(
+    bootstrap_servers=["localhost:9092"],
+    value_serializer=lambda message: json.dumps(message).encode('utf-8')
+)
+
+if __name__=="__main__":
+
+    rospy.init_node('odomSubscriber', anonymous=True)
+    rospy.Subscriber('odom',Odometry,callback)
+    rospy.spin()
+```
+You can use [ros/readFromKafka.py](https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/ros/readFromKafka.py) to check the data is really reach Kafka.
+```python3
+import json
+from kafka import KafkaConsumer
+
+if __name__=="__main__":
+
+    consumer=KafkaConsumer(
+        "odometry",
+        bootstrap_servers="localhost:9092",
+        auto_offset_reset="earliest"
+    )
+
+    for msg in consumer:
+        print(json.loads(msg.value))
+```
 ### 3. Prepare Cassandra environment
 
 #### Prepare Cassandra for Use Case
@@ -168,7 +221,7 @@ cqlsh> DESCRIBE ros.odometry
 ### 4. Prepare Apache Spark structured streaming pipeline
 
 #### Prepare Apache Spark Structured Streaming Pipeline for Use Case
-We will write streaming script that read *odometry* topic from Kafka, analyze it and then write results to Cassandra. 
+We will write streaming script that read *odometry* topic from Kafka, analyze it and then write results to Cassandra. We will use [spark-demo/streamingKafka2Cassandra.py](https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/spark-demo/streamingKafka2Cassandra.py) to do it.
 
 First of all, we create a schema same as we already defined in Cassandra.
 > :warning: **The content of schema has to be the same as Casssandra table**: Be very careful here!
@@ -229,7 +282,7 @@ df1.writeStream \
     .start()\
     .awaitTermination()
 ```
-Finally, we got the given script:
+Finally, we got the given script [spark-demo/streamingKafka2Cassandra.py](https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/spark-demo/streamingKafka2Cassandra.py):
 ```python3
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType,StructField,FloatType,IntegerType
