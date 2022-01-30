@@ -21,8 +21,6 @@ def callback(msg):
     print(f"Producing message {datetime.now()} Message :\n {str(messages)}")
     producer.send("odometry",messages)
     count+=1
-    if count == 20:
-        count = 0
 
 producer = KafkaProducer(
     bootstrap_servers=["localhost:9092"],
