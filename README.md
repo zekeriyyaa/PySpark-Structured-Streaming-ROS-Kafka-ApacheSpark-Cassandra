@@ -9,7 +9,7 @@ The purpose of this project is to demonstrate a structured streaming pipeline wi
 4. Prepare Apache Spark structured streaming pipeline, integrate with Kafka and Cassandra.
 5. Result
 <p align="center" width="100%">
-    <img src="https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/architecture.PNG"> 
+    <img src="https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/dataPipeline.png"> 
 </p>
 
 ### 0. Installation Processes
