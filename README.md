@@ -147,5 +147,4 @@ cqlsh> DESCRIBE ros
 #and
 cqlsh> DESCRIBE ros.odometry
 ```
-
-
+> :warning: **The content of table has to be the same as Spark schema**: Be very careful here!
