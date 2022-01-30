@@ -290,7 +290,7 @@ spark = SparkSession \
 ```
 > :warning: **If you use spark-submit you can specify the packages as:** 
 
-- **spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0,com.datastax.spark:spark-cassandra-connector_2.12:3.0.0 spark_cassandra.py
+- spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.0,com.datastax.spark:spark-cassandra-connector_2.12:3.0.0 spark_cassandra.py
 
 In order to read Kafka stream, we use **readStream()** and specify Kafka configurations as the given below:
 ```python3
