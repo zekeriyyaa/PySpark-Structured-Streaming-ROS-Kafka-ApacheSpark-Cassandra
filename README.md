@@ -7,7 +7,7 @@ The purpose of this project is to demonstrate a structured streaming pipeline wi
 2. Prepare Kafka and Zookeeper environment to store discrete data.
 3. Prepare Cassandra environment to store analyzed data.
 4. Prepare Apache Spark structured streaming pipeline, integrate with Kafka and Cassandra.
-
+5. Result
 <p align="center" width="100%">
     <img src="https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/architecture.PNG"> 
 </p>
@@ -259,7 +259,7 @@ cqlsh> DESCRIBE ros.odometry
 
 ### 4. Prepare Apache Spark structured streaming pipeline
 You are able to write analysis results to either console or Cassandra.
-#### Prepare Apache Spark Structured Streaming Pipeline Kafka to Cassandra
+#### (First Way) Prepare Apache Spark Structured Streaming Pipeline Kafka to Cassandra
 We will write streaming script that read *odometry* topic from Kafka, analyze it and then write results to Cassandra. We will use [spark-demo/streamingKafka2Cassandra.py](https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/spark-demo/streamingKafka2Cassandra.py) to do it.
 
 First of all, we create a schema same as we already defined in Cassandra.
@@ -380,7 +380,7 @@ df1.writeStream \
     .start()\
     .awaitTermination()
 ```
-#### Prepare Apache Spark Structured Streaming Pipeline Kafka to Cassandra
+#### (Second Way) Prepare Apache Spark Structured Streaming Pipeline Kafka to Console
 There are a few differences between writing to the console and writing to Cassandra. 
 First of all, we don't need to use cassandra connector, so we remove it from packages.
 ```python3
@@ -442,3 +442,16 @@ df1.writeStream \
   .start() \
   .awaitTermination()
 ```
+### 5. Result
+After all the process is done, we got the data in our Cassandra table as the given below:
+You can query the given command to see your table:
+```
+# Open the cqlsh 
+cqlsh
+# Then write select query to see content of the table
+cqlsh> select * from ros.odometry
+```
+<p align="center" width="100%">
+    <img src="https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/cassandra.png"> 
+</p>
+
