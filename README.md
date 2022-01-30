@@ -214,7 +214,7 @@ if __name__=="__main__":
     rospy.Subscriber('odom',Odometry,callback)
     rospy.spin()
 ```
-You can use [ros/readFromKafka.py](https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/ros/readFromKafka.py) to check the data is really reach Kafka.
+You can use [ros/readFromKafka.py](https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/ros/readFromKafka.py) to check the data is really reach Kafka while ROS and publish2kafka.py is running.
 ```python3
 import json
 from kafka import KafkaConsumer
@@ -258,8 +258,8 @@ cqlsh> DESCRIBE ros.odometry
 > :warning: **The content of topic has to be the same as Spark schema**: Be very careful here!
 
 ### 4. Prepare Apache Spark structured streaming pipeline
-
-#### Prepare Apache Spark Structured Streaming Pipeline for Use Case
+You are able to write analysis results to either console or Cassandra.
+#### Prepare Apache Spark Structured Streaming Pipeline Kafka to Cassandra
 We will write streaming script that read *odometry* topic from Kafka, analyze it and then write results to Cassandra. We will use [spark-demo/streamingKafka2Cassandra.py](https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/spark-demo/streamingKafka2Cassandra.py) to do it.
 
 First of all, we create a schema same as we already defined in Cassandra.
@@ -380,4 +380,65 @@ df1.writeStream \
     .start()\
     .awaitTermination()
 ```
+#### Prepare Apache Spark Structured Streaming Pipeline Kafka to Cassandra
+There are a few differences between writing to the console and writing to Cassandra. 
+First of all, we don't need to use cassandra connector, so we remove it from packages.
+```python3
+spark = SparkSession \
+    .builder \
+    .appName("SSKafka") \
+    .config("spark.jars.packages","org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.0") \
+    .getOrCreate()
+```
+With **writeStream()** we can write stream data directly to the console.
+```python3
+df1.writeStream \
+  .outputMode("update") \
+  .format("console") \
+  .option("truncate", False) \
+  .start() \
+  .awaitTermination()
+```
+The rest of the process takes place in the same way as the previous one. Finally, we got the given script spark-demo/streamingKafka2Console.py:
+```python3
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType,StructField,LongType,IntegerType,FloatType,StringType
+from pyspark.sql.functions import split,from_json,col
 
+odometrySchema = StructType([
+                StructField("id",IntegerType(),False),
+                StructField("posex",FloatType(),False),
+                StructField("posey",FloatType(),False),
+                StructField("posez",FloatType(),False),
+                StructField("orientx",FloatType(),False),
+                StructField("orienty",FloatType(),False),
+                StructField("orientz",FloatType(),False),
+                StructField("orientw",FloatType(),False)
+            ])
+
+spark = SparkSession \
+    .builder \
+    .appName("SSKafka") \
+    .config("spark.jars.packages","org.apache.spark:spark-sql-kafka-0-10_2.12:3.2.0") \
+    .getOrCreate()
+spark.sparkContext.setLogLevel("ERROR")
+
+df = spark \
+  .readStream \
+  .format("kafka") \
+  .option("kafka.bootstrap.servers", "localhost:9092") \
+  .option("subscribe", "odometry") \
+  .option("delimeter",",") \
+  .option("startingOffsets", "latest") \
+  .load() 
+
+df1 = df.selectExpr("CAST(value AS STRING)").select(from_json(col("value"),odometrySchema).alias("data")).select("data.*")
+df1.printSchema()
+
+df1.writeStream \
+  .outputMode("update") \
+  .format("console") \
+  .option("truncate", False) \
+  .start() \
+  .awaitTermination()
+```
