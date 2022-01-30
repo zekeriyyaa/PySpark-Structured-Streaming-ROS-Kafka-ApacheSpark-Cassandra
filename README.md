@@ -10,7 +10,7 @@ The purpose of this project is to demonstrate a structured streaming pipeline wi
 5. Result
 
 <p align="center" width="100%">
-    <img src="https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/dataPipeline.png"> 
+    <img src="https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/data_pipeline.png"> 
 </p>
 
 ### 0. Installation Processes
