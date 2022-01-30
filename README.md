@@ -82,6 +82,17 @@ The data produced by Turtlebot3 will stored into Kafka clusters.
 #### Installation of Kafka and Zookeeper
 We won't address the whole installation process of Kafka and Zookeeper but you can access all required info from [Kakfa & Zookeeper Installation](https://www.linode.com/docs/guides/how-to-install-apache-kafka-on-ubuntu/).
 
+After all installations are completed, you can demo Kafka using the given commands:
+```
+# Change your path to Kafka folder and then run 
+bin/zookeeper-server-start.sh config/zookeeper.properties
+
+# Open second terminal and then run
+bin/kafka-server-start.sh config/server.properties
+
+# Create Kafka "demo" topic
+bin/kafka-topics.sh --create --topic demo --partitions 1 --replication-factor 1 -bootstrap-server localhost:9092
+```
 
 
 
