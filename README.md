@@ -444,6 +444,7 @@ df1.writeStream \
 ```
 ### 5. Result
 After all the process is done, we got the data in our Cassandra table as the given below:
+
 You can query the given command to see your table:
 ```
 # Open the cqlsh 
