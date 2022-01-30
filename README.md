@@ -80,7 +80,7 @@ In this case, we will just use the given part of the data:
 The data produced by Turtlebot3 will stored into Kafka clusters. 
 
 #### Installation of Kafka and Zookeeper
-We won't address the whole installation process of Kafka and Zookeeper but you can access all required info from [Kakfa & Zookeeper Installation](https://www.linode.com/docs/guides/how-to-install-apache-kafka-on-ubuntu/).
+We won't address the whole installation process of Kafka and Zookeeper but you can access all required info from [Kafka & Zookeeper Installation](https://www.linode.com/docs/guides/how-to-install-apache-kafka-on-ubuntu/).
 
 After all installations are completed, you can demo Kafka using the given commands:
 ```
@@ -94,5 +94,58 @@ bin/kafka-server-start.sh config/server.properties
 bin/kafka-topics.sh --create --topic demo --partitions 1 --replication-factor 1 -bootstrap-server localhost:9092
 ```
 
+Once you create "demo" topic, you can run [kafka-demo/producer.py](https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/kafka-demo/producer.py) and [kafka-demo/consumer.py](https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/kafka-demo/consumer.py) respectively to check your setup. If you haven't installed [kafka-python](https://kafka-python.readthedocs.io/en/master/), use the given command and then run given files.
+```
+pip install kafka-python
+```
+You should see a view like the one given below.
+<p align="center" width="100%">
+    <img src="https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/kafka-demo.png"> 
+</p>
+
+#### Prepare Kafka for Use Case
+First of all, we will create a new Kafka topic for ROS odom data using the given command:
+```
+# Change your path to Kafka folder and then run 
+bin/zookeeper-server-start.sh config/zookeeper.properties
+
+# Open second terminal and then run
+bin/kafka-server-start.sh config/server.properties
+
+# Create Kafka "odometry" topic for ROS odom data
+bin/kafka-topics.sh --create --topic odometry --partitions 1 --replication-factor 1 -bootstrap-server localhost:9092
+```
+Then we will write a ROS subscriber to listen to the data from Turtlebot3. Also, since we need to send data to Kafka, it is necessary to add a producer script in it. We will use [ros/publish2kafka.py](https://github.com/zekeriyyaa/PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra/blob/main/ros/publish2kafka.py) to do it. This script subscribes to the odom topic and sends the content of the topic to Kafka.
+
+### 3. Prepare Cassandra environment
+
+#### Installation of Cassandra
+We won't address the whole installation process of Cassandra but you can access all required info from [Cassandra Installation](https://phoenixnap.com/kb/install-cassandra-on-ubuntu).
+
+After all installations are completed, you can demo Cassandra using *cqlsh*.
+
+#### Prepare Cassandra for Use Case
+Initially, we will create a *keyspace* and then a *topic* in it using given command:
+```
+# Open the cqlsh and then run the command to create 'ros' keyspace
+cqlsh> CREATE KEYSPACE ros WITH replication = {'class':'SimpleStrategy', 'replication_factor' : 1};
+
+# Then, run the command to create 'odometry' topic in 'ros'
+cqlsh> create table ros.odometry(
+        id int primary key, 
+        posex float,
+        posey float,
+        posez float,
+        orientx float,
+        orienty float,
+        orientz float,
+        orientw float);
+
+# Check your setup is correct
+cqlsh> DESCRIBE ros
+
+#and
+cqlsh> DESCRIBE ros.odometry
+```
 
 
