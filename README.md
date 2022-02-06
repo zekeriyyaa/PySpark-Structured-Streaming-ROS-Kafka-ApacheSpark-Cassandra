@@ -1,7 +1,7 @@
 ## PySpark-Structured-Streaming-ROS-Kafka-ApacheSpark-Cassandra
 
 The purpose of this project is to demonstrate a structured streaming pipeline with Apache Spark. The process consists of given steps:
-
+  
 0. Installation Process
 1. Prepare a robotic simulation environment to generate data to feed into the Kafka. 
 2. Prepare Kafka and Zookeeper environment to store discrete data.
